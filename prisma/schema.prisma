@@ -1,0 +1,299 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              BigInt    @id @default(autoincrement())
+  name            String?
+  email           String    @unique
+  password        String
+  role            RoleType  @default(listener)
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  rememberToken   String?   @map("remember_token")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // 🔹 relations
+  artistProfile ArtistProfile?
+  streams       Stream[]
+  likes         Like[]
+  shares        Share[]
+  comments      Comment[]
+  playlists     Playlist[]
+  follows       Follow[]
+}
+
+model ArtistProfile {
+  id             BigInt    @id @default(autoincrement())
+  userId         BigInt    @unique @map("user_id")
+  artistName     String    @map("artist_name")
+  avatar         String?
+  bio            String?
+  city           String?
+  country        String?
+  genre          String?
+  kycStatus      KycStatus @default(pending) @map("kyc_status")
+  blueMark       Boolean   @default(false) @map("blue_mark")
+  followersCount BigInt    @default(0) @map("followers_count")
+  totalStreams   BigInt    @default(0) @map("total_streams")
+  balance        Decimal   @default(0.00) @db.Decimal(10, 2)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // 🔹 relations
+  user            User            @relation(fields: [userId], references: [id])
+  albums          Album[]
+  tracks          Track[]         @relation("MainArtist")
+  featuringTracks Track[]         @relation("FeaturingArtists")
+  analytics       Analytics[]
+  withdrawals     Withdrawal[]
+  kycSubmissions  KycSubmission[]
+  followers       Follow[]
+}
+
+model Follow {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
+  artistId  BigInt
+  createdAt DateTime @default(now())
+
+  user   User          @relation(fields: [userId], references: [id])
+  artist ArtistProfile @relation(fields: [artistId], references: [id])
+
+  @@unique([userId, artistId])
+}
+
+model Genre {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  albums Album[]
+  tracks Track[]
+}
+
+model Album {
+  id          BigInt    @id @default(autoincrement())
+  artistId    BigInt    @map("artist_id")
+  genreId     BigInt?   @map("genre_id")
+  name        String
+  coverImage  String?   @map("cover_image")
+  releaseDate DateTime? @map("release_date")
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id])
+  genre  Genre?        @relation(fields: [genreId], references: [id])
+
+  // 🔹 back relation
+  tracks Track[]
+}
+
+model Track {
+  id           BigInt      @id @default(autoincrement())
+  albumId      BigInt?     @map("album_id")
+  artistId     BigInt      @map("artist_id")
+  genreId      BigInt?     @map("genre_id")
+  name         String
+  audioUrl     String      @map("audio_url")
+  coverImage   String?     @map("cover_image")
+  releaseDate  DateTime?   @map("release_date")
+  duration     Int
+  streamCount  BigInt      @default(0) @map("stream_count")
+  likeCount    BigInt      @default(0) @map("like_count")
+  commentCount BigInt      @default(0) @map("comment_count")
+  shareCount   BigInt      @default(0) @map("share_count")
+  status       TrackStatus @default(pending)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  album  Album?        @relation(fields: [albumId], references: [id])
+  artist ArtistProfile @relation("MainArtist", fields: [artistId], references: [id])
+  genre  Genre?        @relation(fields: [genreId], references: [id])
+
+  playlistTracks PlaylistTrack[]
+
+  // 🔹 relations
+  featuringArtists ArtistProfile[] @relation("FeaturingArtists")
+  streams          Stream[]
+  likes            Like[]
+  shares           Share[]
+  comments         Comment[]
+  analytics        Analytics[]
+}
+
+model Playlist {
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  name        String
+  description String?
+  coverImage  String?  @map("cover_image")
+  isPublic    Boolean  @default(true) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user   User            @relation(fields: [userId], references: [id])
+  tracks PlaylistTrack[]
+}
+
+model PlaylistTrack {
+  id         BigInt   @id @default(autoincrement())
+  playlistId BigInt   @map("playlist_id")
+  trackId    BigInt   @map("track_id")
+  position   Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  playlist Playlist @relation(fields: [playlistId], references: [id])
+  track    Track    @relation(fields: [trackId], references: [id])
+
+  @@unique([playlistId, trackId])
+}
+
+model Stream {
+  id       BigInt   @id @default(autoincrement())
+  songId   BigInt   @map("song_id")
+  userId   BigInt?  @map("user_id")
+  playedAt DateTime @default(now()) @map("played_at")
+
+  device   String?
+  location String?
+
+  track Track @relation(fields: [songId], references: [id])
+  user  User? @relation(fields: [userId], references: [id])
+}
+
+model Like {
+  id        BigInt   @id @default(autoincrement())
+  songId    BigInt   @map("song_id")
+  userId    BigInt   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  track Track @relation(fields: [songId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([songId, userId])
+}
+
+model Share {
+  id        BigInt        @id @default(autoincrement())
+  songId    BigInt        @map("song_id")
+  userId    BigInt        @map("user_id")
+  platform  SharePlatform
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  track Track @relation(fields: [songId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        BigInt   @id @default(autoincrement())
+  songId    BigInt   @map("song_id")
+  userId    BigInt   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  isDeleted Boolean  @default(false) @map("is_deleted")
+
+  track Track @relation(fields: [songId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model Analytics {
+  id           BigInt   @id @default(autoincrement())
+  artistId     BigInt   @map("artist_id")
+  songId       BigInt   @map("song_id")
+  date         DateTime @map("date")
+  streamCount  BigInt   @default(0) @map("stream_count")
+  likeCount    BigInt   @default(0) @map("like_count")
+  commentCount BigInt   @default(0) @map("comment_count")
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id])
+  track  Track         @relation(fields: [songId], references: [id])
+
+  @@unique([artistId, songId, date])
+}
+
+model Withdrawal {
+  id             BigInt           @id @default(autoincrement())
+  artistId       BigInt           @map("artist_id")
+  amount         Decimal          @db.Decimal(10, 2)
+  paymentGateway PaymentGateway
+  status         WithdrawalStatus @default(pending)
+  transactionId  String?          @map("transaction_id")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id])
+}
+
+model KycSubmission {
+  id           BigInt    @id @default(autoincrement())
+  artistId     BigInt    @map("artist_id")
+  documentType String    @map("document_type")
+  documentUrl  String    @map("document_url")
+  status       KycStatus @default(pending)
+  remarks      String?   @map("remarks")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  artist ArtistProfile @relation(fields: [artistId], references: [id])
+}
+
+model Setting {
+  id        BigInt   @id @default(autoincrement())
+  key       String   @unique
+  value     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+enum PaymentGateway {
+  stripe
+  paypal
+  inapp
+}
+
+enum WithdrawalStatus {
+  pending
+  completed
+  failed
+}
+
+enum SharePlatform {
+  facebook
+  twitter
+  instagram
+  whatsapp
+  link
+  other
+}
+
+enum TrackStatus {
+  pending
+  published
+  rejected
+}
+
+enum KycStatus {
+  pending
+  verified
+  rejected
+}
+
+enum RoleType {
+  listener
+  artist
+  admin
+}

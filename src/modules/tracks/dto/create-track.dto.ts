@@ -1,13 +1,15 @@
 import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateTrackDto {
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  audioUrl: string;
+  @IsInt()
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  userId: number;
 
   @IsOptional()
   @IsString()
@@ -17,22 +19,19 @@ export class CreateTrackDto {
   @IsDateString()
   releaseDate?: string;
 
-  @IsInt()
-  duration: number;
-
   @IsOptional()
   @IsInt()
+  @Transform(({ value }) => Number(value))
   albumId?: number;
 
-  @IsInt()
-  artistId: number;
-
   @IsOptional()
   @IsInt()
+  @Transform(({ value }) => Number(value))
   genreId?: number;
 
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })
+  @Transform(({ value }) => typeof value === 'string' ? JSON.parse(value) : value)
   featuringArtistIds?: number[];
 }

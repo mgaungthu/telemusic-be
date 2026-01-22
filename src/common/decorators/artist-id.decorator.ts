@@ -10,6 +10,10 @@ export const ArtistId = createParamDecorator(
       throw new BadRequestException('User not found in request');
     }
 
+    if (user.role === 'admin') {
+      return request.body.artistId ?? request.query.artistId;
+    }
+
     // user.id is from JWT
     const userId = BigInt(user.id);
 

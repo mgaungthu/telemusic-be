@@ -1,22 +1,36 @@
 services:
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - telemusic_default
+
   backend:
     build: .
     container_name: nestjs-backend
-    user: "1000:1000"
     restart: always
     environment:
-      DATABASE_URL: mysql://root:root@dk-database:3306/music_db
+      DATABASE_URL: mysql://root:root@news-rewards-db:3306/music_db
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: 1000
       WATCHPACK_POLLING: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "3000:3000"
     volumes:
       - .:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./tmp:/tmp
     command: sh -c "npx prisma generate && npm run start:dev"
     networks:
-      - telemusic_net
+      - news-reward-be_laravel
+      - telemusic_default
+    depends_on:
+      - redis
 
   prisma-studio:
     image: node:22-alpine
@@ -25,13 +39,32 @@ services:
     volumes:
       - .:/usr/src/app
     environment:
-      DATABASE_URL: mysql://root:root@dk-database:3306/music_db
+      DATABASE_URL: mysql://root:root@news-rewards-db:3306/music_db
     command: npx prisma studio --port 5555 --schema=prisma/schema.prisma
     ports:
       - "5555:5555"
     networks:
-      - telemusic_net
+      - news-reward-be_laravel
+  
+
+  bullmq-worker:
+    build: .
+    container_name: bullmq-worker
+    command: npm run start:worker
+    volumes:
+      - .:/usr/src/app 
+      - ./tmp:/tmp
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - telemusic_default
+      - news-reward-be_laravel
 
 networks:
-  telemusic_net:
+  news-reward-be_laravel:
+    external: true
+
+  telemusic_default:
     external: true

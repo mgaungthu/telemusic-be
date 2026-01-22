@@ -19,6 +19,10 @@ export class AlbumsService {
     });
   }
 
+  async getAllAlbums() {
+    return this.repo.findAll();
+  }
+
   async getAlbum(id: bigint) {
     const album = await this.repo.findById(id);
     if (!album) throw new NotFoundException('Album not found');

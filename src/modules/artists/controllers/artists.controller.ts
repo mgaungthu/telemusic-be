@@ -1,10 +1,18 @@
-import { Controller, Get, Patch, Post, Param, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Param,
+  Body,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 
 import { ArtistService } from '../services/artist.service';
 import { UpdateArtistDto } from '../dto/update-artist.dto';
-
 
 @Controller('artists')
 export class ArtistsController {
@@ -24,7 +32,7 @@ export class ArtistsController {
   @Post('create')
   create(
     @CurrentUser() user,
-    @Body() body: { userId?: number; artistName: string }
+    @Body() body: { userId?: number; artistName: string },
   ) {
     let finalUserId: bigint;
 

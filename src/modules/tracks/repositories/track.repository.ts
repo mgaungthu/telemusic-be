@@ -1,7 +1,9 @@
+/**
+ * Flexible findMany for tracks with options for orderBy, take, and where.
+ */
+
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
-import { CreateTrackDto } from '../dto/create-track.dto';
-import { UpdateTrackDto } from '../dto/update-track.dto';
 
 @Injectable()
 export class TrackRepository {
@@ -9,7 +11,23 @@ export class TrackRepository {
 
   create(data: any) {
     return this.prisma.track.create({
-      data,
+      data: {
+        name: data.name,
+        coverImage: data.coverImage ?? null,
+        releaseDate: data.releaseDate ?? null,
+
+        // foreign keys ONLY
+        artistId: data.artistId,
+        albumId: data.albumId,
+        genreId: data.genreId,
+
+        // async audio fields (worker will update later)
+        audioUrl: '__PROCESSING__',
+        duration: 0,
+
+        // optional relations
+        featuringArtists: data.featuringArtists,
+      },
       include: {
         artist: true,
         album: true,
@@ -40,6 +58,7 @@ export class TrackRepository {
       include: {
         artist: true,
         album: true,
+        genre: true,
         featuringArtists: true,
       },
     });
@@ -67,6 +86,18 @@ export class TrackRepository {
     });
   }
 
+  findByGenre(genreId: bigint) {
+    return this.prisma.track.findMany({
+      where: { genreId },
+      include: {
+        artist: true,
+        album: true,
+        featuringArtists: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   findAll() {
     return this.prisma.track.findMany({
       include: {
@@ -75,6 +106,19 @@ export class TrackRepository {
         featuringArtists: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  findMany(options?: { orderBy?: any; take?: number; where?: any }) {
+    return this.prisma.track.findMany({
+      ...(options?.where && { where: options.where }),
+      ...(options?.orderBy && { orderBy: options.orderBy }),
+      ...(options?.take && { take: options.take }),
+      include: {
+        artist: true,
+        album: true,
+        featuringArtists: true,
+      },
     });
   }
 }

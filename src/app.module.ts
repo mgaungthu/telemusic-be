@@ -1,4 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
+
 import { IdentityModule } from './modules/identity/identity.module';
 import { ArtistsModule } from './modules/artists/artists.module';
 import { AlbumsModule } from './modules/albums/albums.module';
@@ -15,10 +17,20 @@ import { PrismaModule } from '@/common/prisma/prisma.module';
 import { PrismaRequestMiddleware } from '@/common/middleware/prisma-request.middleware';
 import { LoggingModule } from '@/common/logging/logging.module';
 
-
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { LookupsModule } from './modules/lookups/lookups.module';
+import { AdminUsersModule } from './modules/admin/admin-users.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'redis',
+        port: Number(process.env.REDIS_PORT) || 6379,
+      },
+    }),
     PrismaModule,
     IdentityModule,
     ArtistsModule,
@@ -30,8 +42,13 @@ import { LoggingModule } from '@/common/logging/logging.module';
     AnalyticsModule,
     MonetizationModule,
     KycModule,
-    SettingsModule
+    LookupsModule,
+    AdminUsersModule,
+    UploadsModule,
+    SettingsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

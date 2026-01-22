@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ArtistRepository {
@@ -32,6 +33,15 @@ export class ArtistRepository {
         throw new BadRequestException('Artist profile already exists for this user.');
       }
       throw new BadRequestException('Failed to create artist profile.');
+    }
+  }
+
+  async findMany(where?: Prisma.ArtistProfileWhereInput) {
+    try {
+      return await this.prisma.artistProfile.findMany({ where });
+    } catch (error) {
+      console.error('Error fetching artist profiles:', error);
+      throw new BadRequestException('Failed to fetch artist profiles.');
     }
   }
 }

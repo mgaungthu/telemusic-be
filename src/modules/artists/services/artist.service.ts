@@ -1,10 +1,14 @@
+import { PrismaService } from '@/common/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ArtistRepository } from '../repositories/artist.repository';
 import { UpdateArtistDto } from '../dto/update-artist.dto';
 
 @Injectable()
 export class ArtistService {
-  constructor(private repo: ArtistRepository) {}
+  constructor(
+    private repo: ArtistRepository,
+    private prisma: PrismaService,
+  ) {}
 
   async getProfile(userId: bigint) {
     const artist = await this.repo.findByUser(userId);
@@ -17,6 +21,18 @@ export class ArtistService {
   }
 
   async createArtist(userId: bigint, artistName: string) {
-    return this.repo.create({ userId, artistName });
+    const existing = await this.repo.findByUser(userId);
+    if (existing) {
+      return existing;
+    }
+
+    const artist = await this.repo.create({ userId, artistName });
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: 'artist' },
+    });
+
+    return artist;
   }
 }

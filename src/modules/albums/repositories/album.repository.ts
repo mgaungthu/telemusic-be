@@ -20,7 +20,44 @@ export class AlbumRepository {
   findById(id: bigint) {
     return this.prisma.album.findUnique({
       where: { id },
-      include: { genre: true, tracks: true },
+            include: {
+        artist: {
+          select: {
+            id: true,
+            artistName: true,
+          },
+        },
+                tracks: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            tracks: true,
+          },
+        },
+      },
+    });
+  }
+
+  findAll() {
+    return this.prisma.album.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        artist: {
+          select: {
+            id: true,
+            artistName: true,
+          },
+        },
+        _count: {
+          select: {
+            tracks: true,
+          },
+        },
+      },
     });
   }
 

@@ -17,8 +17,10 @@ model User {
   id              BigInt    @id @default(autoincrement())
   name            String?
   email           String    @unique
+  phoneNumber     String?   @unique @map("phone_number")
   password        String
   role            RoleType  @default(listener)
+  status          UserStatus @default(active)
   emailVerifiedAt DateTime? @map("email_verified_at")
   rememberToken   String?   @map("remember_token")
   createdAt       DateTime  @default(now()) @map("created_at")
@@ -40,9 +42,9 @@ model ArtistProfile {
   artistName     String    @map("artist_name")
   avatar         String?
   bio            String?
-  city           String?
-  country        String?
-  genre          String?
+  countryId      BigInt?   @map("country_id")
+  cityId         BigInt?   @map("city_id")
+  genreId        BigInt?   @map("genre_id")
   kycStatus      KycStatus @default(pending) @map("kyc_status")
   blueMark       Boolean   @default(false) @map("blue_mark")
   followersCount BigInt    @default(0) @map("followers_count")
@@ -60,6 +62,10 @@ model ArtistProfile {
   withdrawals     Withdrawal[]
   kycSubmissions  KycSubmission[]
   followers       Follow[]
+
+  country Country? @relation(fields: [countryId], references: [id])
+  city    City?    @relation(fields: [cityId], references: [id])
+  genre   Genre?   @relation(fields: [genreId], references: [id])
 }
 
 model Follow {
@@ -82,6 +88,31 @@ model Genre {
 
   albums Album[]
   tracks Track[]
+  artists ArtistProfile[]
+}
+
+model Country {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cities  City[]
+  artists ArtistProfile[]
+}
+
+model City {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  countryId BigInt   @map("country_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  country Country       @relation(fields: [countryId], references: [id])
+  artists ArtistProfile[]
+
+  @@unique([name, countryId])
 }
 
 model Album {
@@ -296,4 +327,9 @@ enum RoleType {
   listener
   artist
   admin
+}
+
+enum UserStatus {
+  active
+  blocked
 }

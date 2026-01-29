@@ -86,15 +86,19 @@ export class TrackRepository {
     });
   }
 
-  findByGenre(genreId: bigint) {
+  findByGenre(
+    genreId: bigint,
+    options?: { orderBy?: any; take?: number }
+  ) {
     return this.prisma.track.findMany({
       where: { genreId },
+      ...(options?.orderBy && { orderBy: options.orderBy }),
+      ...(options?.take && { take: options.take }),
       include: {
         artist: true,
         album: true,
         featuringArtists: true,
       },
-      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -121,4 +125,24 @@ export class TrackRepository {
       },
     });
   }
+
+  // Fetch popular playlists for a given genre, sorted by total track streams
+    async findPopularPlaylistsByGenre(genreId: bigint) {
+    // Fetch playlists with their tracks
+    return this.prisma.playlist.findMany({
+      where: {
+        tracks: {
+          some: {
+            track: { genreId },
+          },
+        },
+      },
+      include: {
+        tracks: {
+          include: { track: true },
+        },
+      },
+    });
+  }
+
 }

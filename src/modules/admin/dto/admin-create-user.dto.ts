@@ -4,7 +4,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  ValidateNested,
   IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -18,28 +17,6 @@ export enum AdminUserRole {
 export enum AdminUserStatus {
   ACTIVE = 'active',
   BLOCKED = 'blocked',
-}
-
-class ArtistProfileDto {
-  @IsString()
-  @IsNotEmpty()
-  artistName: string;
-
-  @IsOptional()
-  @IsInt()
-  genreId?: number;
-
-  @IsOptional()
-  @IsInt()
-  countryId?: number;
-
-  @IsOptional()
-  @IsInt()
-  cityId?: number;
-
-  @IsOptional()
-  @IsString()
-  bio?: string;
 }
 
 export class AdminCreateUserDto {
@@ -61,8 +38,31 @@ export class AdminCreateUserDto {
   @IsEnum(AdminUserStatus)
   status?: AdminUserStatus;
 
+  // Flat artist fields
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ArtistProfileDto)
-  artist?: ArtistProfileDto;
+  @IsString()
+  artistName?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  genreId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  countryId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  cityId?: number;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
 }

@@ -16,4 +16,8 @@ export class UpdateArtistDto {
   @IsOptional()
   @IsBoolean()
   blueMark?: boolean;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }

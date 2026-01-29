@@ -10,6 +10,7 @@ import {
 } from '../dto/admin-create-user.dto';
 import { RoleType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { AdminUpdateUserDto } from '../dto/admin-update-user.dto';
 
 @Injectable()
 export class AdminUsersService {
@@ -46,18 +47,18 @@ export class AdminUsersService {
 
       // 2️⃣ Create artist profile if role = artist
       if (dto.role === AdminUserRole.ARTIST) {
-        if (!dto.artist) {
+        if (!dto.artistName) {
           throw new BadRequestException('Artist info is required');
         }
 
         await tx.artistProfile.create({
           data: {
             userId: user.id,
-            artistName: dto.artist.artistName,
-            genreId: dto.artist.genreId,
-            countryId: dto.artist.countryId,
-            cityId: dto.artist.cityId,
-            bio: dto.artist.bio,
+            artistName: dto.artistName,
+            genreId: dto.genreId,
+            countryId: dto.countryId,
+            cityId: dto.cityId,
+            bio: dto.bio,
           },
         });
       }
@@ -115,7 +116,7 @@ export class AdminUsersService {
   }
 
   // ✏️ Update user (role / status / artist)
-  async updateUser(id: string, data: Partial<AdminCreateUserDto>) {
+  async updateUser(id: bigint, data: Partial<AdminUpdateUserDto>) {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.update({
         where: { id: BigInt(id) },
@@ -127,26 +128,70 @@ export class AdminUsersService {
       });
 
       // Handle artist profile
-      if (data.role === AdminUserRole.ARTIST && data.artist) {
+      if (data.role === AdminUserRole.ARTIST && data.artistName) {
+        // Log artist update info
+        console.log('Updating artist profile:', {
+          artistName: data.artistName,
+          genreId: data.genreId,
+          countryId: data.countryId,
+          cityId: data.cityId,
+          bio: data.bio,
+          avatar: data.avatar,
+        });
+
         await tx.artistProfile.upsert({
           where: { userId: user.id },
           update: {
-            artistName: data.artist.artistName,
-            genreId: data.artist.genreId,
-            countryId: data.artist.countryId,
-            cityId: data.artist.cityId,
-            bio: data.artist.bio,
+            artistName: data.artistName ?? '',
+            genreId: data.genreId ?? null,
+            countryId: data.countryId ?? null,
+            cityId: data.cityId ?? null,
+            bio: data.bio ?? '',
+            avatar: data.avatar ?? undefined,
           },
           create: {
             userId: user.id,
-            artistName: data.artist.artistName,
-            genreId: data.artist.genreId,
-            countryId: data.artist.countryId,
-            cityId: data.artist.cityId,
-            bio: data.artist.bio,
+            artistName: data.artistName ?? '',
+            genreId: data.genreId ?? null,
+            countryId: data.countryId ?? null,
+            cityId: data.cityId ?? null,
+            bio: data.bio ?? '',
+            avatar: data.avatar ?? undefined,
           },
         });
+
       }
+
+      // 🗑️ Remove artist profile if user is no longer an artist
+      if (data.role && data.role !== AdminUserRole.ARTIST) {
+        const artistProfile = await tx.artistProfile.findUnique({
+          where: { userId: user.id },
+          select: { id: true },
+        });
+
+        if (artistProfile) {
+          // Check dependent records (tracks, albums, etc.)
+          const hasDependencies = await tx.track.findFirst({
+            where: { artistId: artistProfile.id },
+            select: { id: true },
+          });
+
+          if (hasDependencies) {
+            throw new BadRequestException(
+              'Cannot remove artist role while artist has existing tracks or albums',
+            );
+          }
+
+         await tx.artistProfile.update({
+            where: { id: artistProfile.id },
+            data: {
+              kycStatus: 'pending',
+            },
+          });
+        }
+      }
+
+      
 
       return user;
     });

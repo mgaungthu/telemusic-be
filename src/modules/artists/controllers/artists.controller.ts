@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Param,
   Body,
   UseGuards,
@@ -54,5 +55,34 @@ export class ArtistsController {
     }
 
     return this.service.createArtist(finalUserId, body.artistName);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':artistId/follow')
+  followArtist(
+    @CurrentUser() user,
+    @Param('artistId') artistId: string,
+  ) {
+    return this.service.followArtist(
+      BigInt(user.id),
+      BigInt(artistId),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':artistId/follow')
+  unfollowArtist(
+    @CurrentUser() user,
+    @Param('artistId') artistId: string,
+  ) {
+    return this.service.unfollowArtist(
+      BigInt(user.id),
+      BigInt(artistId),
+    );
+  }
+
+  @Get(':artistId/followers')
+  getFollowers(@Param('artistId') artistId: string) {
+    return this.service.getFollowers(BigInt(artistId));
   }
 }

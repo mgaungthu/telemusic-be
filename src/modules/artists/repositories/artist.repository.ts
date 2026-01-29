@@ -44,4 +44,15 @@ export class ArtistRepository {
       throw new BadRequestException('Failed to fetch artist profiles.');
     }
   }
+
+    // Fetch popular artists for a given genre
+  async findPopularArtistsByGenre(genreId: bigint) {
+    return this.prisma.artistProfile.findMany({
+      where: {
+        genreId: genreId,
+      },
+      orderBy: { followersCount: 'desc' },
+      take: 10,
+    });
+  }
 }

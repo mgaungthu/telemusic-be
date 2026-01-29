@@ -1,14 +1,20 @@
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  ValidateNested,
-  IsInt,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, IsString, IsInt } from 'class-validator';
 import { AdminUserRole, AdminUserStatus } from './admin-create-user.dto';
 
-class UpdateArtistProfileDto {
+export class AdminUpdateUserDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsEnum(AdminUserRole)
+  role?: AdminUserRole;
+
+  @IsOptional()
+  @IsEnum(AdminUserStatus)
+  status?: AdminUserStatus;
+
+  // Flat artist fields
   @IsOptional()
   @IsString()
   artistName?: string;
@@ -28,23 +34,8 @@ class UpdateArtistProfileDto {
   @IsOptional()
   @IsString()
   bio?: string;
-}
 
-export class AdminUpdateUserDto {
   @IsOptional()
   @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsEnum(AdminUserRole)
-  role?: AdminUserRole;
-
-  @IsOptional()
-  @IsEnum(AdminUserStatus)
-  status?: AdminUserStatus;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UpdateArtistProfileDto)
-  artist?: UpdateArtistProfileDto;
+  avatar?: string;
 }

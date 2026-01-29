@@ -48,9 +48,14 @@ export class TracksController {
     return this.service.getTracksByGenre(BigInt(genreId));
   }
 
+
+  @Get('genre/:genreId/detail')
+  getGenreDetail(@Param('genreId') genreId: string) {
+    return this.service.getGenreDetail(BigInt(genreId));
+  }
+
   @Get('album/:albumId')
   getByAlbum(@Param('albumId') albumId: bigint) {
-    console.log(albumId);
     return this.service.getTracksByAlbum(BigInt(albumId));
   }
 

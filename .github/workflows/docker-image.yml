@@ -27,14 +27,14 @@ jobs:
       # 4️⃣ Build & push API image
       - name: Build & Push API image
         run: |
-          docker build -f Dockerfile.prod -t yourdockerhub/telemusic-api:latest .
-          docker push yourdockerhub/telemusic-api:latest
+          docker build -f Dockerfile.prod -t mandalayads/telemusic-api:latest .
+          docker push mandalayads/telemusic-api:latest
 
       # 5️⃣ Build & push Worker image
       - name: Build & Push Worker image
         run: |
-          docker build -f Dockerfile.worker -t yourdockerhub/telemusic-worker:latest .
-          docker push yourdockerhub/telemusic-worker:latest
+          docker build -f Dockerfile.worker -t mandalayads/telemusic-worker:latest .
+          docker push mandalayads/telemusic-worker:latest
 
       # 6️⃣ Optional: deploy to server via SSH
       - name: Deploy to Server

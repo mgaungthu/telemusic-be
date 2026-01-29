@@ -9,12 +9,14 @@ import { ArtistRepository } from '../../artists/repositories/artist.repository';
 import { TrackRepository } from '../repositories/track.repository';
 import { CreateTrackDto } from '../dto/create-track.dto';
 import { UpdateTrackDto } from '../dto/update-track.dto';
+import { AlbumRepository } from '@/modules/albums/repositories/album.repository';
 
 @Injectable()
 export class TracksService {
   constructor(
     private artistRepo: ArtistRepository,
     private trackRepo: TrackRepository,
+    private albumRepo: AlbumRepository,
     @InjectQueue('audio-transcode')
     private readonly audioQueue: Queue,
   ) {}
@@ -63,6 +65,25 @@ export class TracksService {
 
   getTracksByGenre(genreId: bigint) {
     return this.trackRepo.findByGenre(genreId);
+  }
+
+
+   // Fetch genre detail including popular playlists, popular artists, top tracks, and new releases
+  async getGenreDetail(genreId: bigint) {
+    const [popularPlaylists, popularArtists, topTracks, newReleaseAlbum] =
+      await Promise.all([
+        this.trackRepo.findPopularPlaylistsByGenre(genreId),
+        this.artistRepo.findPopularArtistsByGenre(genreId),
+        this.trackRepo.findByGenre(genreId, { orderBy: { streamCount: 'desc' }, take: 10 }),
+        this.albumRepo.findNewByGenre(genreId),
+      ]);
+
+    return {
+      popularPlaylists,
+      popularArtists,
+      topTracks,
+      newReleaseAlbum,
+    };
   }
 
   async updateTrack(id: bigint, dto: UpdateTrackDto) {
@@ -153,4 +174,8 @@ export class TracksService {
       take: 20,
     });
   }
+
+
 }
+
+ 

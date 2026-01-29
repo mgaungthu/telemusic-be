@@ -6,6 +6,7 @@ import { TracksService } from './services/tracks.service';
 import { TrackRepository } from './repositories/track.repository';
 import { ArtistRepository } from '../artists/repositories/artist.repository';
 import { UploadsModule } from '../uploads/uploads.module';
+import { AlbumRepository } from '../albums/repositories/album.repository';
 
 
 @Module({
@@ -20,6 +21,7 @@ import { UploadsModule } from '../uploads/uploads.module';
     TracksService,
     TrackRepository,
     ArtistRepository,
+    AlbumRepository
   ],
   exports: [TracksService],
 })

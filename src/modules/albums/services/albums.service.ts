@@ -7,10 +7,9 @@ import { UpdateAlbumDto } from '../dto/update-album.dto';
 export class AlbumsService {
   constructor(private repo: AlbumRepository) {}
 
-  createAlbum(dto: CreateAlbumDto,  artistId: bigint) {
-    
+  createAlbum(dto: CreateAlbumDto, artistId: bigint) {
     return this.repo.create({
-      artistId: dto.artistId || artistId,
+      artistId: dto.artistId,
       genreId: dto.genreId,
       name: dto.name,
       coverImage: dto.coverImage,

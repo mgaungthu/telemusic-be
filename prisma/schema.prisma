@@ -83,6 +83,7 @@ model Follow {
 model Genre {
   id        BigInt   @id @default(autoincrement())
   name      String   @unique
+  image     String?  @map("image")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
